@@ -13,7 +13,7 @@ Nothing here knows what your app does. Actions are yours; this is the wire.
 | --- | --- |
 | npm package `agent-ui-bridge` (action registry, relay client, confirm gate, React modal, extension client) | `npm i github:maparham/agent-ui-bridge` |
 | Python package `agent-ui-bridge` (relay hub, WebSocket pump, the `ui_*` MCP tools, a probe) | `uv add "agent-ui-bridge @ git+https://github.com/maparham/agent-ui-bridge#subdirectory=python"` |
-| `extension/` Tab Bridge Chrome extension | load unpacked, see `extension/README.md` |
+| `extension/` Tab Bridge Chrome extension | clone this repo, then load `extension/` unpacked (it is not in the npm tarball), see `extension/README.md` |
 
 The extension's page-side client ships in the npm package as
 `agent-ui-bridge/tab-bridge` (`probeTabBridge`, `tabBridgeScreenshot`,
@@ -112,6 +112,8 @@ python3 -m agent_ui_bridge.probe --screenshot /tmp/shot.png
 ```bash
 cd agent-ui-bridge && npm link
 cd ../your-app/frontend && npm link agent-ui-bridge
+# With a linked copy, dedupe React or the confirm modal's hook throws:
+# vite.config.ts -> resolve: { dedupe: ["react", "react-dom"] }
 
 uv pip install -e ../agent-ui-bridge/python
 ```

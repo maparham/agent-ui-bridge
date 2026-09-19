@@ -36,7 +36,7 @@ def tools_for(hub):
 async def test_ui_screenshot_returns_image_block():
     png = base64.b64encode(b"\x89PNG fake").decode()
     hub = FakeHub(result={
-        "caption": "US100 HOUR (cell c1)",
+        "caption": "ABC daily (panel p1)",
         "mime": "image/png", "image_base64": png, "via": "extension",
     })
     blocks = await tools_for(hub)["ui_screenshot"]()
@@ -44,7 +44,7 @@ async def test_ui_screenshot_returns_image_block():
     text = next(b for b in blocks if getattr(b, "type", "") == "text")
     assert image.data == png
     assert image.mime_type == "image/png"
-    assert text.text == "US100 HOUR (cell c1) via extension"
+    assert text.text == "ABC daily (panel p1) via extension"
     # It must go through the readOnly invoke path:
     kind, payload, _ = hub.calls[0]
     assert kind == "invoke"

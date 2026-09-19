@@ -16,6 +16,10 @@ from . import browser
 from .hub import ActionFailedError, NoTabError, TabTimeoutError
 
 TITLE_ACTION = "tab.title.set"
+TOOL_NAMES = (
+    "ui_sessions", "ui_actions", "ui_set_title", "ui_invoke", "ui_wait",
+    "ui_read_state", "ui_screenshot", "ui_focus_tab", "ui_open_tab", "ui_close_tab",
+)
 
 # Tool descriptions. The MCP SDK cleandocs a function's docstring but registers
 # an explicit `description=` verbatim, so `_add` runs inspect.cleandoc on these
@@ -82,6 +86,9 @@ def register_ui_tools(
     """
     tools: dict[str, Callable[..., Any]] = {}
     overrides = dict(docs or {})
+    unknown = set(overrides) - set(TOOL_NAMES)
+    if unknown:
+        raise ValueError(f"docs names unknown tools: {sorted(unknown)}")
 
     def _add(fn: Callable[..., Any], description: str) -> None:
         text = overrides.get(fn.__name__, description)

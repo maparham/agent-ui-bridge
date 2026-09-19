@@ -73,7 +73,9 @@ register_ui_tools(
     frontend_url=lambda: "http://localhost:5173",
     hosted=lambda: False,                  # True refuses browser tab control
 )
-# Optional: screenshot_doc overrides the ui_screenshot docstring agents read;
+# Optional: docs={tool_name: text} overrides any tool description agents read
+# (screenshot_doc does the same for ui_screenshot); title_example is the sample
+# title quoted in the UNTITLED_TAB error;
 # app_url_label names the setting frontend_url comes from in error text.
 # The call returns {tool_name: callable} so tests can drive the tools directly.
 

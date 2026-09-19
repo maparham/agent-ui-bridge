@@ -7,7 +7,8 @@ is hosted (hosted refuses browser tab control outright).
 """
 from __future__ import annotations
 
-from typing import Any, Callable
+import inspect
+from typing import Any, Callable, Mapping
 
 from mcp.types import ImageContent, TextContent
 
@@ -16,20 +17,21 @@ from .hub import ActionFailedError, NoTabError, TabTimeoutError
 
 TITLE_ACTION = "tab.title.set"
 
-# Tool descriptions. The MCP SDK registers `description or fn.__doc__` verbatim
-# (no cleandoc), so these reproduce the original docstrings exactly, four-space
-# continuation indents included. Agents read this text: treat it as an API.
+# Tool descriptions. The MCP SDK cleandocs a function's docstring but registers
+# an explicit `description=` verbatim, so `_add` runs inspect.cleandoc on these
+# to reproduce what the original docstrings produced. Agents read this text:
+# treat it as an API.
 _DOC_SESSIONS = """List connected UI tabs (most recently active first)."""
 
 _DOC_ACTIONS = """The manifest: every UI action with its name, kind, and JSON schema."""
 
 _DOC_SET_TITLE = """Name the browser tab you are about to drive. REQUIRED before ui_invoke,
     ui_read_state or ui_screenshot work on a session. Keep it short and
-    specific ('US100 4H backtest', 'OIL_CRUDE trendline review'); the tab
+    specific ('Orders review', 'Weekly report export'); the tab
     prefixes a robot mark so the owner can tell agent tabs from their own."""
 
 _DOC_INVOKE = """Invoke a UI action. Fast actions return the result; long-running ones
-    (backtest.run, sweep.start) and confirm-kind ones (which wait on a human
+    (exports, batch jobs) and confirm-kind ones (which wait on a human
     approving a dialog) return {"handle": ...} - poll with ui_wait. A rejected
     confirm surfaces as ui_wait status "error" with "REJECTED: ...".
     Refused with UNTITLED_TAB until ui_set_title has named the tab."""
@@ -37,7 +39,7 @@ _DOC_INVOKE = """Invoke a UI action. Fast actions return the result; long-runnin
 _DOC_WAIT = """Wait for a long-running invocation. Returns {status, progress, result?, error?};
     status "running" after timeout means keep polling."""
 
-_DOC_READ_STATE = """Shorthand for invoking a read-kind action by name (e.g. backtest.result).
+_DOC_READ_STATE = """Shorthand for invoking a read-kind action by name (e.g. settings.get).
 
     `readOnly` is enforced by the tab: a key naming a write- or confirm-kind
     action is refused with NOT_READ_ACTION instead of being executed.
@@ -63,6 +65,8 @@ def register_ui_tools(
     *,
     screenshot_action: str = "page.screenshot",
     screenshot_doc: str | None = None,
+    docs: Mapping[str, str] | None = None,
+    title_example: str = "Orders review",
     app_name: str = "app",
     app_url_label: str = "the configured app URL",
     frontend_url: Callable[[], str] | None = None,
@@ -71,12 +75,17 @@ def register_ui_tools(
     """Register the ten ui_* tools on `mcp`, relaying through `hub`.
 
     Returns the registered callables keyed by tool name, so a test can drive
-    them directly without an MCP transport.
+    them directly without an MCP transport. `docs` overrides the description
+    of any tool by name (an app may want its own examples in the text agents
+    read); `title_example` is the sample title quoted in the UNTITLED_TAB
+    error.
     """
     tools: dict[str, Callable[..., Any]] = {}
+    overrides = dict(docs or {})
 
     def _add(fn: Callable[..., Any], description: str) -> None:
-        mcp.tool(description=description)(fn)
+        text = overrides.get(fn.__name__, description)
+        mcp.tool(description=inspect.cleandoc(text))(fn)
         tools[fn.__name__] = fn
 
     # -- guards ------------------------------------------------------------
@@ -91,7 +100,7 @@ def register_ui_tools(
         if not titled:
             raise RuntimeError(
                 "UNTITLED_TAB: this tab has no title yet; call ui_set_title with a "
-                "short description of what you are doing (e.g. 'US100 4H backtest') "
+                f"short description of what you are doing (e.g. '{title_example}') "
                 "before invoking, reading or screenshotting it"
             )
 

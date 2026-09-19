@@ -1,0 +1,32 @@
+{
+  "name": "agent-ui-bridge",
+  "version": "0.1.0",
+  "description": "Let MCP agents drive a running web UI: a typed action registry, a WebSocket relay client, and the ui_* MCP tools.",
+  "license": "MIT",
+  "author": "Mahan Parham",
+  "repository": { "type": "git", "url": "git+https://github.com/maparham/agent-ui-bridge.git" },
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": { "types": "./dist/index.d.ts", "default": "./dist/index.js" },
+    "./react": { "types": "./dist/react/AgentConfirmHost.d.ts", "default": "./dist/react/AgentConfirmHost.js" },
+    "./tab-bridge": { "types": "./dist/tabBridge.d.ts", "default": "./dist/tabBridge.js" }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "prepare": "npm run build",
+    "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "peerDependencies": { "react": ">=18" },
+  "peerDependenciesMeta": { "react": { "optional": true } },
+  "devDependencies": {
+    "@types/react": "^19.2.14",
+    "jsdom": "^29.1.1",
+    "react": "^19.2.6",
+    "typescript": "~6.0.2",
+    "vitest": "^4.1.9"
+  }
+}

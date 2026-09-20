@@ -35,7 +35,7 @@ def fake_tab(hub):
     return sid, sent
 
 
-def titled_tab(hub, title="🤖 test"):
+def titled_tab(hub, title="✻ test"):
     sid, sent = fake_tab(hub)
     hub.set_title(sid, title)
     return sid, sent
@@ -124,11 +124,11 @@ async def test_untitled_tab_refuses_invoke_read_and_screenshot(hub, ui):
 async def test_ui_set_title_invokes_the_action_and_unlocks_the_tab(hub, ui):
     sid, sent = fake_tab(hub)
     task = asyncio.ensure_future(ui["ui_set_title"]("nightly review"))
-    await reply(hub, sid, sent, ok=True, result={"title": "🤖 nightly review"})
-    assert await task == {"session": sid, "title": "🤖 nightly review"}
+    await reply(hub, sid, sent, ok=True, result={"title": "✻ nightly review"})
+    assert await task == {"session": sid, "title": "✻ nightly review"}
     assert sent[0]["op"] == "invoke" and sent[0]["action"] == "tab.title.set"
     assert sent[0]["args"] == {"title": "nightly review"}
-    assert (await ui["ui_sessions"]())[0]["title"] == "🤖 nightly review"
+    assert (await ui["ui_sessions"]())[0]["title"] == "✻ nightly review"
     task = asyncio.ensure_future(ui["ui_invoke"]("thing.select", {"name": "a"}))
     while len(sent) < 2:
         await asyncio.sleep(0)
@@ -150,7 +150,7 @@ async def test_title_is_per_session(hub, ui):
     with pytest.raises(RuntimeError, match="UNTITLED_TAB"):
         await ui["ui_invoke"]("thing.select", {"name": "a"}, session=b)
     sessions = await ui["ui_sessions"]()
-    assert {s["id"]: s["title"] for s in sessions} == {a: "🤖 test", b: None}
+    assert {s["id"]: s["title"] for s in sessions} == {a: "✻ test", b: None}
 
 
 @pytest.mark.anyio
@@ -159,5 +159,5 @@ async def test_ui_invoke_of_the_title_action_routes_to_set_title(hub, ui):
     the tab could never be named through the generic tool."""
     sid, sent = fake_tab(hub)
     task = asyncio.ensure_future(ui["ui_invoke"]("tab.title.set", {"title": "named"}))
-    await reply(hub, sid, sent, ok=True, result={"title": "🤖 named"})
-    assert await task == {"session": sid, "title": "🤖 named"}
+    await reply(hub, sid, sent, ok=True, result={"title": "✻ named"})
+    assert await task == {"session": sid, "title": "✻ named"}

@@ -323,7 +323,7 @@ describe("title announcement on connect", () => {
     }
     const prev = (globalThis as any).WebSocket;
     const prevStorage = (globalThis as any).sessionStorage;
-    const store = new Map<string, string>([["agent-ui-bridge.title", "🤖 Orders review"]]);
+    const store = new Map<string, string>([["agent-ui-bridge.title", "✻ Orders review"]]);
     (globalThis as any).sessionStorage = {
       getItem: (k: string) => store.get(k) ?? null,
       setItem: (k: string, v: string) => { store.set(k, v); },
@@ -333,7 +333,7 @@ describe("title announcement on connect", () => {
       const stop = startAgentBridge({ url: "ws://stub/ws" });
       StubSocket.last!.onopen!();
       expect(StubSocket.last!.sent.map((s) => JSON.parse(s))).toEqual([
-        { event: "title", title: "🤖 Orders review" },
+        { event: "title", title: "✻ Orders review" },
       ]);
       stop();
     } finally {

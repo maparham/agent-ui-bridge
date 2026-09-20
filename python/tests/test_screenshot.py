@@ -23,7 +23,7 @@ class FakeHub:
         # The title gate runs before the request; a missing tab surfaces here.
         if isinstance(self.exc, NoTabError):
             raise self.exc
-        return "🤖 test"
+        return "✻ test"
 
 
 def tools_for(hub):

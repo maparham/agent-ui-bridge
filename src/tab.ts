@@ -1,11 +1,11 @@
 // Browser-tab actions that are not about the page: naming the tab. The
 // backend's ui_set_title tool calls tab.title.set and refuses every other UI
 // tool on a session until it has run, so an agent-driven tab is always named.
-// The robot mark is stamped here, not left to the agent, so the owner can
+// The ✻ mark is stamped here, not left to the agent, so the owner can
 // tell agent tabs from their own at a glance whatever title the agent picked.
 import { ActionError, registerAction } from "./registry.js";
 
-export const AGENT_TAB_MARK = "🤖";
+export const AGENT_TAB_MARK = "✻";
 
 // The title survives a reload: sessionStorage is per tab and outlives the
 // page, so a reloaded tab restores its name and announces it when the bridge
@@ -32,7 +32,7 @@ export function registerTabActions(): void {
   registerAction({
     name: "tab.title.set",
     description:
-      "Name this browser tab (document.title) so the owner can tell agent-driven tabs apart. Prefixes a robot mark. Required before other actions; normally invoked through the ui_set_title MCP tool.",
+      "Name this browser tab (document.title) so the owner can tell agent-driven tabs apart. Prefixes a ✻ mark. Required before other actions; normally invoked through the ui_set_title MCP tool.",
     kind: "write",
     params: {
       type: "object",

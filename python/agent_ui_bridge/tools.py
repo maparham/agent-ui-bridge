@@ -32,7 +32,7 @@ _DOC_ACTIONS = """The manifest: every UI action with its name, kind, and JSON sc
 _DOC_SET_TITLE = """Name the browser tab you are about to drive. REQUIRED before ui_invoke,
     ui_read_state or ui_screenshot work on a session. Keep it short and
     specific ('Orders review', 'Weekly report export'); the tab
-    prefixes a robot mark so the owner can tell agent tabs from their own."""
+    prefixes a ✻ mark so the owner can tell agent tabs from their own."""
 
 _DOC_INVOKE = """Invoke a UI action. Fast actions return the result; long-running ones
     (exports, batch jobs) and confirm-kind ones (which wait on a human

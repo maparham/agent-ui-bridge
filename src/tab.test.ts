@@ -9,7 +9,7 @@ describe("tab.title.set", () => {
   beforeEach(() => { clearRegistryForTest(); registerTabActions(); document.title = "host app"; });
   afterEach(() => { document.title = "host app"; });
 
-  it("is a write action that stamps the robot mark in front of the title", async () => {
+  it("is a write action that stamps the ✻ mark in front of the title", async () => {
     expect(listActions().find((a) => a.name === "tab.title.set")?.kind).toBe("write");
     const res = await invokeAction("tab.title.set", { title: "Orders review" }, ctx);
     expect(res).toEqual({ title: `${AGENT_TAB_MARK} Orders review` });

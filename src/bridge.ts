@@ -6,6 +6,7 @@ import {
   ActionError, getAction, invokeAction, listActions, validateArgs,
 } from "./registry.js";
 import { requestAgentConfirm } from "./confirm.js";
+import { storedTabTitle } from "./tab.js";
 
 export interface InboundFrame {
   id: string;
@@ -147,6 +148,12 @@ export function startAgentBridge(opts: BridgeOptions): () => void {
       const dialUrl = token ? `${url}?token=${encodeURIComponent(token)}` : url;
       ws = new WebSocket(decorateUrl ? decorateUrl(dialUrl) : dialUrl);
       ws.onopen = () => {
+        // Tell the hub the name this tab already carries (a reload or a
+        // backend restart would otherwise leave the session untitled).
+        const title = storedTabTitle();
+        if (title && ws?.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify({ event: "title", title }));
+        }
         // Only reset retryMs after connection has been stable for 5s
         // (avoids backoff reset on handshake-then-close storms)
         stabilityTimer = setTimeout(() => {

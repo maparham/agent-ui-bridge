@@ -16,4 +16,4 @@ export { Signal } from "./signal.js";
 export type { AgentConfirmState } from "./confirm.js";
 export { agentConfirmSignal, requestAgentConfirm, resolveAgentConfirm } from "./confirm.js";
 
-export { registerTabActions, AGENT_TAB_MARK } from "./tab.js";
+export { registerTabActions, restoreTabTitle, storedTabTitle, AGENT_TAB_MARK } from "./tab.js";

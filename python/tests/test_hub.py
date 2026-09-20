@@ -178,3 +178,16 @@ async def test_unregister_scoped_to_target_tab():
     with pytest.raises(NoTabError) as ei:
         await task_c
     assert "disconnected" in str(ei.value)
+
+
+@pytest.mark.anyio
+async def test_title_event_names_the_session_without_a_request():
+    hub = BridgeHub()
+    sid, _sent = make_tab(hub)
+    assert hub.title_of(sid) is None
+    hub.on_frame(sid, {"event": "title", "title": "  Orders review  "})
+    assert hub.title_of(sid) == "Orders review"
+    hub.on_frame(sid, {"event": "title", "title": "   "})
+    assert hub.title_of(sid) == "Orders review"
+    hub.on_frame(sid, {"event": "title", "title": 7})
+    assert hub.title_of(sid) == "Orders review"

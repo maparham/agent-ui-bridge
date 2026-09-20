@@ -22,7 +22,7 @@ The extension's page-side client ships in the npm package as
 ## Frontend: register actions, start the bridge
 
 ```ts
-import { registerAction, registerTabActions, startAgentBridge } from "agent-ui-bridge";
+import { registerAction, registerTabActions, restoreTabTitle, startAgentBridge } from "agent-ui-bridge";
 
 registerAction({
   name: "cart.add",
@@ -37,6 +37,7 @@ registerAction({
 });
 
 registerTabActions();            // adds tab.title.set, required by ui_set_title
+restoreTabTitle();               // a reloaded tab keeps its name (sessionStorage)
 const stop = startAgentBridge({  // returns a stop function
   url: "ws://localhost:8000/ws/agent-ui",
   token: () => myAuthToken(),    // optional; appended as ?token=

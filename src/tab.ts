@@ -7,6 +7,27 @@ import { ActionError, registerAction } from "./registry.js";
 
 export const AGENT_TAB_MARK = "🤖";
 
+// The title survives a reload: sessionStorage is per tab and outlives the
+// page, so a reloaded tab restores its name and announces it when the bridge
+// reconnects, instead of coming back as an untitled session.
+const TITLE_KEY = "agent-ui-bridge.title";
+
+function remember(title: string): void {
+  try { sessionStorage.setItem(TITLE_KEY, title); } catch { /* storage blocked */ }
+}
+
+/** The title this tab was last given by an agent, or null. */
+export function storedTabTitle(): string | null {
+  try { return sessionStorage.getItem(TITLE_KEY); } catch { return null; }
+}
+
+/** Re-apply a remembered title to document.title (call once at startup). */
+export function restoreTabTitle(): string | null {
+  const title = storedTabTitle();
+  if (title) document.title = title;
+  return title;
+}
+
 export function registerTabActions(): void {
   registerAction({
     name: "tab.title.set",
@@ -23,6 +44,7 @@ export function registerTabActions(): void {
       if (!raw) throw new ActionError("INVALID_ARGS", "title must be a non-empty string");
       const title = raw.startsWith(AGENT_TAB_MARK) ? raw : `${AGENT_TAB_MARK} ${raw}`;
       document.title = title;
+      remember(title);
       return { title };
     },
   });

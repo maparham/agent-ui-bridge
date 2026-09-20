@@ -141,6 +141,14 @@ class BridgeHub:
 
     def on_frame(self, session_id: str, frame: dict) -> None:
         self.touch(session_id)
+        if frame.get("event") == "title" and "handle" not in frame:
+            # A tab announcing the name it already carries (after a reload or
+            # a hub restart), so the title gate does not make the agent
+            # re-title a tab that is still visibly named.
+            title = frame.get("title")
+            if isinstance(title, str) and title.strip():
+                self.set_title(session_id, title.strip())
+            return
         rid = frame.get("id")
         if rid is not None:
             pending_entry = self._pending.get(rid)

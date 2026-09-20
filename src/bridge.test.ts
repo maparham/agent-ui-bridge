@@ -306,3 +306,39 @@ describe("bridge frame handling", () => {
     expect(c.sent[0]).toEqual({ id: "14", ok: true, result: { pnl: 1 } });
   });
 });
+
+describe("title announcement on connect", () => {
+  it("sends the remembered title as soon as the socket opens", async () => {
+    class StubSocket {
+      static OPEN = 1;
+      static last: StubSocket | null = null;
+      readyState = 1;
+      sent: string[] = [];
+      onopen: (() => void) | null = null;
+      onmessage: ((ev: { data: string }) => void) | null = null;
+      onclose: (() => void) | null = null;
+      constructor() { StubSocket.last = this; }
+      send(s: string) { this.sent.push(s); }
+      close() { this.onclose?.(); }
+    }
+    const prev = (globalThis as any).WebSocket;
+    const prevStorage = (globalThis as any).sessionStorage;
+    const store = new Map<string, string>([["agent-ui-bridge.title", "🤖 Orders review"]]);
+    (globalThis as any).sessionStorage = {
+      getItem: (k: string) => store.get(k) ?? null,
+      setItem: (k: string, v: string) => { store.set(k, v); },
+    };
+    (globalThis as any).WebSocket = StubSocket;
+    try {
+      const stop = startAgentBridge({ url: "ws://stub/ws" });
+      StubSocket.last!.onopen!();
+      expect(StubSocket.last!.sent.map((s) => JSON.parse(s))).toEqual([
+        { event: "title", title: "🤖 Orders review" },
+      ]);
+      stop();
+    } finally {
+      (globalThis as any).WebSocket = prev;
+      (globalThis as any).sessionStorage = prevStorage;
+    }
+  });
+});

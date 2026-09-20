@@ -6,7 +6,14 @@
 // error codes: extension/README.md.
 
 const NS = "tab-bridge";
+// Two hello deadlines: a quick one for the common case, then one generous
+// retry. A freshly loaded, backgrounded tab is still booting the app when
+// the first probe goes out, and the reply queues behind that work on the
+// main thread, so 300ms alone read an installed extension as absent (the
+// first ui_screenshot after a reload failed TAB_HIDDEN, the second worked).
+// Only a page WITHOUT the extension pays the retry, once per probe.
 const HELLO_TIMEOUT_MS = 300;
+const HELLO_RETRY_TIMEOUT_MS = 1500;
 const OP_TIMEOUT_MS = 10_000;
 
 export class TabBridgeError extends Error {
@@ -95,13 +102,32 @@ function request<T>(op: string, args: object, timeoutMs: number): Promise<T> {
  * answering); a null answer is re-probed next call (the user may install it
  * later). */
 export async function probeTabBridge(): Promise<TabBridgeHello | null> {
-  if (hello) return hello;
-  try {
-    hello = await request<TabBridgeHello>("hello", {}, HELLO_TIMEOUT_MS);
-  } catch {
-    hello = null;
+  return (await probeTabBridgeDetailed()).hello;
+}
+
+export type TabBridgeProbeReason = "timeout" | "error";
+
+/** probeTabBridge with the reason a null came back: "timeout" when no reply
+ * arrived within either deadline (absent extension, or one too slow to be
+ * usable), "error" when the relay answered with an error frame (an orphaned
+ * content script after an unpacked-extension reload). Lets a caller word its
+ * own failure honestly instead of assuming "not installed". */
+export async function probeTabBridgeDetailed(): Promise<{ hello: TabBridgeHello | null; reason?: TabBridgeProbeReason }> {
+  if (hello) return { hello };
+  let reason: TabBridgeProbeReason = "timeout";
+  for (const timeoutMs of [HELLO_TIMEOUT_MS, HELLO_RETRY_TIMEOUT_MS]) {
+    try {
+      hello = await request<TabBridgeHello>("hello", {}, timeoutMs);
+      return { hello };
+    } catch (e) {
+      if ((e as TabBridgeError).code !== "EXTENSION_TIMEOUT") {
+        reason = "error";
+        break;
+      }
+    }
   }
-  return hello;
+  hello = null;
+  return { hello: null, reason };
 }
 
 export function tabBridgeScreenshot(args: ScreenshotArgs): Promise<ScreenshotResult> {

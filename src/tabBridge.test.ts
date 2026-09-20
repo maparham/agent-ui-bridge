@@ -2,7 +2,7 @@
 // @vitest-environment jsdom
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import {
-  probeTabBridge, tabBridgeScreenshot, tabBridgeFocus, TabBridgeError, resetTabBridgeForTest,
+  probeTabBridge, probeTabBridgeDetailed, tabBridgeScreenshot, tabBridgeFocus, TabBridgeError, resetTabBridgeForTest,
 } from "./tabBridge.js";
 
 type Frame = { ns: string; dir: string; id: string; op?: string; args?: unknown };
@@ -39,14 +39,45 @@ describe("tabBridge", () => {
     expect(hellos).toBe(1);
   });
 
-  it("probe resolves null after 300ms with no extension, and re-probes next time", async () => {
-    const p = probeTabBridge();
+  it("probe resolves null after 300ms + one 1500ms retry with no extension, and re-probes next time", async () => {
+    let settled = false;
+    const p = probeTabBridge().then((v) => { settled = true; return v; });
     await vi.advanceTimersByTimeAsync(300);
+    expect(settled).toBe(false);
+    await vi.advanceTimersByTimeAsync(1500);
     expect(await p).toBeNull();
     uninstall = installFakeExtension(() => ({ ok: true, result: { version: "1.0.0", ops: [] } }));
     const p2 = probeTabBridge();
     await vi.runAllTimersAsync();
     expect(await p2).toEqual({ version: "1.0.0", ops: [] });
+  });
+
+  // The reply to the first hello can queue behind a busy main thread on a
+  // freshly loaded, backgrounded tab. The retry catches an extension that
+  // answers late, so the caller does not report it as missing.
+  it("probe still detects an extension that answers after the first deadline", async () => {
+    let hellos = 0;
+    uninstall = installFakeExtension((f) => {
+      if (f.op !== "hello") return null;
+      hellos++;
+      if (hellos === 1) return null; // swallowed: the reply never made the 300ms window
+      return { ok: true, result: { version: "1.0.0", ops: ["screenshot", "focus"] } };
+    });
+    const p = probeTabBridgeDetailed();
+    await vi.advanceTimersByTimeAsync(300);
+    await vi.runAllTimersAsync();
+    expect(await p).toEqual({ hello: { version: "1.0.0", ops: ["screenshot", "focus"] } });
+    expect(hellos).toBe(2);
+  });
+
+  it("probe reports why it found nothing", async () => {
+    const p1 = probeTabBridgeDetailed();
+    await vi.advanceTimersByTimeAsync(1800);
+    expect(await p1).toEqual({ hello: null, reason: "timeout" });
+    uninstall = installFakeExtension(() => ({ ok: false, error: { code: "EXTENSION_ERROR", message: "context invalidated" } }));
+    const p2 = probeTabBridgeDetailed();
+    await vi.runAllTimersAsync();
+    expect(await p2).toEqual({ hello: null, reason: "error" });
   });
 
   it("screenshot forwards args and resolves the matching reply only", async () => {
